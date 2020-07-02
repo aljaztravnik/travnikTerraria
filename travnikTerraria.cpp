@@ -4,33 +4,55 @@
 #include <cstdlib>
 #include <ctime>
 #include "Definicije.h"
+#include <unistd.h>
+#include <termios.h>
+
+char getch() {
+        char buf = 0;
+        struct termios old = {0};
+        if (tcgetattr(0, &old) < 0)
+                perror("tcsetattr()");
+        old.c_lflag &= ~ICANON;
+        old.c_lflag &= ~ECHO;
+        old.c_cc[VMIN] = 1;
+        old.c_cc[VTIME] = 0;
+        if (tcsetattr(0, TCSANOW, &old) < 0)
+                perror("tcsetattr ICANON");
+        if (read(0, &buf, 1) < 0)
+                perror ("read()");
+        old.c_lflag |= ICANON;
+        old.c_lflag |= ECHO;
+        if (tcsetattr(0, TCSADRAIN, &old) < 0)
+                perror ("tcsetattr ~ICANON");
+        return (buf);
+}
 
 // [19, 41)
 
-void makeTerrain(std::vector<std::vector<char>> &map)
+void makeTerrain(std::vector<std::vector<char>> &map, int posX, int& posY)
 {
 	int height = rand() % (40 - 19) + 19;
 	map[height][0] = 'X';
 	for(int i = 1; i < map[0].size(); i++)
 	{
-		int upDown = rand() % (3-1)+1;
-		if(upDown == 1)
+		bool upDown = rand() % 2;
+		if(upDown)
 			if(height - 1 >= 9)
-			{
 				height--; // Actually -- because arrays start with 0 and we have to go up.
-				std::cout << '[' << i+1 << "] gremo gor\n";
-			}
 		else
 			if(height + 1 <= 49) 
-			{
 				height++;
-				std::cout << '[' << i+1 << "] gremo dol\n";
-			}
 		map[height][i] = 'X';
+		if(i == map[0].size()/2) 
+		{
+			posY = height-1;
+			map[posY][posX] = 'M';
+		}
 	}
 	for(int i = 10; i < map.size(); i++)
-		for(int j = 0; j < map[i].size(); j++)
+		for(int j = 0; j < map[0].size(); j++)
 			if(map[i-1][j] == 'X') map[i][j] = 'X';
+
 }
 
 void drawMap(std::vector<std::vector<char>> &map)
@@ -38,7 +60,7 @@ void drawMap(std::vector<std::vector<char>> &map)
 	//system("clear");
 	for(int i = 0; i < map.size(); i++)
 	{
-		for(int j = 0; j < map[i].size(); j++)
+		for(int j = 0; j < map[0].size(); j++)
 			std::cout << map[i][j];
 		std::cout << '\n';
 	}
@@ -48,8 +70,20 @@ int main()
 {
 	srand(time(NULL));
 	std::vector<std::vector<char>> map(50, std::vector<char>(50, ' '));
-	makeTerrain(map);
+	int posX = map[0].size()/2, posY = 0;
+	char inp;
+	makeTerrain(map, posX, posY);
 	drawMap(map);
+	while(1)
+	{
+		inp = getch();
+		switch(inp)
+		{
+			case 'a':
+				map[posY][posX] = ' ';
+				map[posY][posX-1] = 'M'; 
+		}
+	}
 	//std::string output = BLACK + "a" + RED + "a" + GREEN + "a" + '\n';
 	//std::cout << output;
 	return 0;
