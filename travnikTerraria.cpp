@@ -29,10 +29,10 @@ char getch() {
 
 // [19, 41)
 
-void makeTerrain(std::vector<std::vector<char>> &map, int posX, int& posY)
+void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY)
 {
 	int height = rand() % (40 - 19) + 19;
-	map[height][0] = 'X';
+	map[height][0] = "X";
 	for(int i = 1; i < map[0].size(); i++)
 	{
 		bool upDown = rand() % 2;
@@ -42,20 +42,20 @@ void makeTerrain(std::vector<std::vector<char>> &map, int posX, int& posY)
 		else
 			if(height + 1 <= 49) 
 				height++;
-		map[height][i] = 'X';
+		map[height][i] = "X";
 		if(i == map[0].size()/2) 
 		{
 			posY = height-1;
-			map[posY][posX] = 'M';
+			map[posY][posX] = RED + "M" + RESET;
 		}
 	}
 	for(int i = 10; i < map.size(); i++)
 		for(int j = 0; j < map[0].size(); j++)
-			if(map[i-1][j] == 'X') map[i][j] = 'X';
+			if(map[i-1][j] == "X") map[i][j] = "X";
 
 }
 
-void drawMap(std::vector<std::vector<char>> &map)
+void drawMap(std::vector<std::vector<std::string>> &map)
 {
 	//system("clear");
 	for(int i = 0; i < map.size(); i++)
@@ -69,20 +69,26 @@ void drawMap(std::vector<std::vector<char>> &map)
 int main()
 {
 	srand(time(NULL));
-	std::vector<std::vector<char>> map(50, std::vector<char>(50, ' '));
+	std::vector<std::vector<std::string>> map(50, std::vector<std::string>(50, " "));
 	int posX = map[0].size()/2, posY = 0;
-	char inp;
 	makeTerrain(map, posX, posY);
-	drawMap(map);
 	while(1)
 	{
-		inp = getch();
+		system("clear");
+		char inp = getch();
 		switch(inp)
 		{
 			case 'a':
-				map[posY][posX] = ' ';
-				map[posY][posX-1] = 'M'; 
+				if(posX > 0)
+				{
+					map[posY][posX] = " ";
+					posX--;
+					map[posY][posX] = RED + "M" + RESET;
+				}
+
 		}
+
+		drawMap(map);
 	}
 	//std::string output = BLACK + "a" + RED + "a" + GREEN + "a" + '\n';
 	//std::cout << output;
