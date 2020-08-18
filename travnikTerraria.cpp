@@ -6,8 +6,33 @@
 #include "Definicije.h"
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
-char getch() {
+void enable_raw_mode()
+{
+    termios term;
+    tcgetattr(0, &term);
+    term.c_lflag &= ~(ICANON | ECHO); // Disable echo as well
+    tcsetattr(0, TCSANOW, &term);
+}
+
+void disable_raw_mode()
+{
+    termios term;
+    tcgetattr(0, &term);
+    term.c_lflag |= ICANON | ECHO;
+    tcsetattr(0, TCSANOW, &term);
+}
+
+bool kbhit()
+{
+    int byteswaiting;
+    ioctl(0, FIONREAD, &byteswaiting);
+    return byteswaiting > 0;
+}
+
+char getch()
+{
         char buf = 0;
         struct termios old = {0};
         if (tcgetattr(0, &old) < 0)
@@ -46,7 +71,7 @@ void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY
 		if(i == map[0].size()/2) 
 		{
 			posY = height-1;
-			map[posY][posX] = RED + "M" + RESET;
+			map[posY][posX] = PLAYER;
 		}
 	}
 	for(int i = 10; i < map.size(); i++)
@@ -57,7 +82,7 @@ void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY
 
 void drawMap(std::vector<std::vector<std::string>> &map)
 {
-	//system("clear");
+	system("clear");
 	for(int i = 0; i < map.size(); i++)
 	{
 		for(int j = 0; j < map[0].size(); j++)
@@ -71,24 +96,76 @@ int main()
 	srand(time(NULL));
 	std::vector<std::vector<std::string>> map(50, std::vector<std::string>(50, " "));
 	int posX = map[0].size()/2, posY = 0;
+	bool jump = false, up = true;
+	uint8_t jumpHeight = 3;
 	makeTerrain(map, posX, posY);
 	while(1)
 	{
-		system("clear");
-		char inp = getch();
-		switch(inp)
+		drawMap(map);
+		
+		enable_raw_mode();
+		if(kbhit())
 		{
-			case 'a':
-				if(posX > 0)
-				{
-					map[posY][posX] = " ";
-					posX--;
-					map[posY][posX] = RED + "M" + RESET;
-				}
+			char inp = getch();
+			switch(static_cast<int>(inp))
+			{
+				case 97:
+					if(posX > 0)
+					{
+						map[posY][posX] = " ";
+						posX--;
+						map[posY][posX] = PLAYER;
+					}
+				case 100:
+					if(posX < 49)
+					{
+						map[posY][posX] = " ";
+						posX++;
+						map[posY][posX] = PLAYER;
+					}
+				case 32:
+					if(posY < 49 && posY > 0)
+						if(map[posY-1][posX] == " " && map[posY+1][posX] != " ") jump = true;
+			}
+		}
+		disable_raw_mode();
+		
 
+		if(posY > 0)
+		{
+			if(jump && map[posY-1][posX] == " ")
+			{
+				if(jumpHeight > 0)
+				{
+					jumpHeight--;
+					map[posY][posX] = " ";
+					posY--;
+					map[posY][posX] = PLAYER;
+				}
+				else
+				{
+					jump = false;
+					jumpHeight = 3;
+				}
+			}
+		}
+		else
+		{
+			jump = false;
+			jumpHeight = 3;
 		}
 
-		drawMap(map);
+		if(!jump)
+		{
+			// padaj
+			if(posY > 49)
+				if(map[posY+1][posX] == " ")
+				{
+					map[posY][posX] = " ";
+					posY++;
+					map[posY][posX] = PLAYER;
+				}
+		}
 	}
 	//std::string output = BLACK + "a" + RED + "a" + GREEN + "a" + '\n';
 	//std::cout << output;

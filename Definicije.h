@@ -16,3 +16,4 @@ std::string BOLDBLUE = "\033[1m\033[34m";
 std::string BOLDMAGENTA = "\033[1m\033[35m";
 std::string BOLDCYAN = "\033[1m\033[36m";
 std::string BOLDWHITE = "\033[1m\033[37m";
+std::string PLAYER = RED + "M" + RESET;
