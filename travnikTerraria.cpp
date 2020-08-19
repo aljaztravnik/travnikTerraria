@@ -91,15 +91,26 @@ void drawMap(std::vector<std::vector<std::string>> &map)
 	}
 }
 
+enum Smer
+{
+	levo,
+	desno,
+	gor,
+	dol,
+	nikamor
+};
+
 int main()
 {
 	srand(time(NULL));
 	struct winsize size;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &size); // size.ws_row is the number of rows, size.ws_col is the number of columns.
 	std::vector<std::vector<std::string>> map(size.ws_row, std::vector<std::string>(size.ws_col, " "));
+	std::vector<std::string> inventar;
 	int posX = map[0].size()/2, posY = 0;
 	bool jump = false, up = true;
 	uint8_t jumpHeight = 3;
+	Smer smer = nikamor;
 	makeTerrain(map, posX, posY, size);
 	while(1)
 	{
@@ -111,30 +122,67 @@ int main()
 			char inp = getch();
 			switch(inp)
 			{
+				
+				case 'w':
+					smer = gor;
+					break;
+				case 's':
+					smer = dol;
+					break;
 				case 'a':
 					if(posX > 0)
-					{
-						map[posY][posX] = " ";
-						map[posY][--posX] = PLAYER;
-					}
+						if(map[posY][posX-1] == " ") map[posY][--posX] = PLAYER;
+					smer = levo;
 					break;
 				case 'd':
 					if(posX < size.ws_col-1)
-					{
-						map[posY][posX] = " ";
-						map[posY][++posX] = PLAYER;
-					}
+						if(map[posY][posX+1] == " ") map[posY][++posX] = PLAYER;
+					smer = desno;
 					break;
 				case ' ':
-					if(posY < size.ws_row-1 && posY > 0)
+					if(posY <= size.ws_row-1 && posY > 0)
 						if(map[posY-1][posX] == " " && map[posY+1][posX] != " ") jump = true;
+				case 'e':
+					switch(smer)
+					{
+						case gor:
+							if(posY > 0)
+								if(map[posY-1][posX] != " ")
+								{
+									inventar.push_back(map[posY-1][posX]);
+									map[posY-1][posX] = " ";
+								}
+							break;
+						case dol:
+							if(posY < size.ws_row-1)
+								if(map[posY+1][posX] != " ")
+								{
+									inventar.push_back(map[posY+1][posX]);
+									map[posY+1][posX] = " ";
+								}
+							break;
+						case levo:
+							if(posX > 0)
+								if(map[posY][posX-1] != " ")
+								{
+									inventar.push_back(map[posY][posX-1]);
+									map[posY][posX-1] = " ";
+								}
+							break;
+						case desno:
+							if(posX < size.ws_col-1)
+								if(map[posY][posX+1] != " ")
+								{
+									inventar.push_back(map[posY][posX+1]);
+									map[posY][posX+1] = " ";
+								}
+					}
 			}
 		}
 		disable_raw_mode();
 		
 
 		if(posY > 0)
-		{
 			if(jump && map[posY-1][posX] == " ")
 			{
 				if(jumpHeight > 0)
@@ -149,7 +197,6 @@ int main()
 					jumpHeight = 3;
 				}
 			}
-		}
 		else
 		{
 			jump = false;
@@ -157,7 +204,6 @@ int main()
 		}
 
 		if(!jump)
-		{
 			// padaj
 			if(posY < size.ws_col-1)
 				if(map[posY+1][posX] == " ")
@@ -165,7 +211,6 @@ int main()
 					map[posY][posX] = " ";
 					map[++posY][posX] = PLAYER;
 				}
-		}
 	}
 	//std::string output = BLACK + "a" + RED + "a" + GREEN + "a" + '\n';
 	//std::cout << output;
