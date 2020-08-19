@@ -54,7 +54,7 @@ char getch()
 
 // [19, 41)
 
-void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY)
+void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY, winsize &size)
 {
 	int height = rand() % (40 - 19) + 19;
 	map[height][0] = "X";
@@ -65,7 +65,7 @@ void makeTerrain(std::vector<std::vector<std::string>> &map, int posX, int& posY
 			if(height - 1 >= 9)
 				height--; // Actually -- because arrays start with 0 and we have to go up.
 		else
-			if(height + 1 <= 49) 
+			if(height + 1 <= size.ws_col-1)
 				height++;
 		map[height][i] = "X";
 		if(i == map[0].size()/2) 
@@ -94,11 +94,13 @@ void drawMap(std::vector<std::vector<std::string>> &map)
 int main()
 {
 	srand(time(NULL));
-	std::vector<std::vector<std::string>> map(50, std::vector<std::string>(50, " "));
+	struct winsize size;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &size); // size.ws_row is the number of rows, size.ws_col is the number of columns.
+	std::vector<std::vector<std::string>> map(size.ws_row, std::vector<std::string>(size.ws_col, " "));
 	int posX = map[0].size()/2, posY = 0;
 	bool jump = false, up = true;
 	uint8_t jumpHeight = 3;
-	makeTerrain(map, posX, posY);
+	makeTerrain(map, posX, posY, size);
 	while(1)
 	{
 		drawMap(map);
@@ -107,24 +109,24 @@ int main()
 		if(kbhit())
 		{
 			char inp = getch();
-			switch(static_cast<int>(inp))
+			switch(inp)
 			{
-				case 97:
+				case 'a':
 					if(posX > 0)
 					{
 						map[posY][posX] = " ";
-						posX--;
-						map[posY][posX] = PLAYER;
+						map[posY][--posX] = PLAYER;
 					}
-				case 100:
-					if(posX < 49)
+					break;
+				case 'd':
+					if(posX < size.ws_col-1)
 					{
 						map[posY][posX] = " ";
-						posX++;
-						map[posY][posX] = PLAYER;
+						map[posY][++posX] = PLAYER;
 					}
-				case 32:
-					if(posY < 49 && posY > 0)
+					break;
+				case ' ':
+					if(posY < size.ws_row-1 && posY > 0)
 						if(map[posY-1][posX] == " " && map[posY+1][posX] != " ") jump = true;
 			}
 		}
@@ -139,8 +141,7 @@ int main()
 				{
 					jumpHeight--;
 					map[posY][posX] = " ";
-					posY--;
-					map[posY][posX] = PLAYER;
+					map[--posY][posX] = PLAYER;
 				}
 				else
 				{
@@ -158,12 +159,11 @@ int main()
 		if(!jump)
 		{
 			// padaj
-			if(posY > 49)
+			if(posY < size.ws_col-1)
 				if(map[posY+1][posX] == " ")
 				{
 					map[posY][posX] = " ";
-					posY++;
-					map[posY][posX] = PLAYER;
+					map[++posY][posX] = PLAYER;
 				}
 		}
 	}
