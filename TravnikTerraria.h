@@ -30,7 +30,7 @@ private:
 	int posX, posY;
 	bool jump, playerMoved, emptyBlockChanged, blockChanged;
 	uint8_t jumpHeight;
-	uint32_t delayFor;
+	uint16_t delayFor;
 	Smer smer;
 
 

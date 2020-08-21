@@ -238,7 +238,16 @@ void TravnikTerraria::run()
 		{
 			if(jumpHeight > 0)
 			{
-				if(delayFor >= 10000)
+				jumpHeight--;
+				newEmptyBlockPos[0] = posY;
+				newEmptyBlockPos[1] = posX;
+				--posY;
+				newPlayerPos[0] = posY;
+				newPlayerPos[1] = posX;
+				emptyBlockChanged = true;
+				playerMoved = true;
+
+				/*if(delayFor >= 10000)
 				{
 					jumpHeight--;
 					newEmptyBlockPos[0] = posY;
@@ -250,7 +259,7 @@ void TravnikTerraria::run()
 					playerMoved = true;
 					delayFor = 0;
 				}
-				else delayFor++;
+				else delayFor++;*/
 			}
 			else
 			{
